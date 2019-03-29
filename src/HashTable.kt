@@ -1,43 +1,54 @@
-import java.lang.IllegalArgumentException
-
 class HashTable(vararg numbers: Int) {
 
-    private val size = 32
+    private var size = 32
 
     private val table = arrayOfNulls<MutableList<Int>>(size)
 
-    private fun hash(value: Int): Int = (value*57 + value) % size
+    private fun hash(value: Int): Int = value % size
+
+    //Тоже самое в виде свойства почему то не работает
+    fun loadFactor(): Double = this.values().size.toDouble() / (size * 5.0)
 
     init {
-        if (numbers.size > numbers.toSet().size) throw IllegalArgumentException("Повторяющиеся значения")
-        for (i in 0 until numbers.size) {
-            val index = hash(numbers[i])
-            if ( table[index].isNullOrEmpty() ) {
-                table[index] = mutableListOf(numbers[i])
-            }
-            else table[index]!!.add(numbers[i])
+        while (numbers.size / (size * 5) >= 0.7) {
+            size *= 2
+        }
+        val values = numbers.toSet().toIntArray()
+        for (i in 0 until values.size) {
+            val index = hash(values[i])
+            if (table[index].isNullOrEmpty()) {
+                table[index] = mutableListOf(values[i])
+            } else table[index]!!.add(values[i])
         }
     }
 
-    operator fun contains(value: Int): Boolean {
-        val index = hash(value)
-        return if (table[index].isNullOrEmpty()) false
-        else {
-            for (i in 0 until table[index]!!.size) {
-                if (table[index]!![i] == value) return true
+    fun values(): List<Int> {
+        val values = mutableListOf<Int>()
+        for (i in 0 until table.size) {
+            if (!table[i].isNullOrEmpty()) {
+                for (j in 0 until table[i]!!.size) {
+                    values.add(table[i]!![j])
+                }
             }
-            false
         }
+        return values.sorted()
     }
+
+    operator fun contains(value: Int): Boolean = this.values().contains(value)
 
     fun add(vararg numbers: Int) {
+        // не знаю как это нормально сделать
+        /*
+        while (this.loadFactor() + (numbers.size.toDouble() / (size * 5)) >= 0.7) {
+            size *= 2
+        }
+        */
         for (i in 0 until numbers.size) {
             if (!this.contains(numbers[i])) {
-            val index = hash(numbers[i])
-                if ( table[index].isNullOrEmpty() ) {
+                val index = hash(numbers[i])
+                if (table[index].isNullOrEmpty()) {
                     table[index] = mutableListOf(numbers[i])
-                }
-                else table[index]!!.add(numbers[i])
+                } else table[index]!!.add(numbers[i])
             }
         }
     }
@@ -45,33 +56,36 @@ class HashTable(vararg numbers: Int) {
     fun remove(vararg numbers: Int) {
         for (i in 0 until numbers.size) {
             if (this.contains(numbers[i])) {
-                table[hash(numbers[i])] = null
+                table[hash(numbers[i])]!!.remove(numbers[i])
             }
         }
     }
 
+    override fun equals(other: Any?): Boolean = other is HashTable && this.size == other.size && this.values() == other.values()
 
-    override fun equals(other: Any?): Boolean {
-        if (other is HashTable && this.size == other.size) {
-            for (i in 0 until this.size) {
-                if (!table[i].isNullOrEmpty()) {
-                    if (this.table[i] == other.table[i]) continue
-                    else return false
-                }
-            }
-            return true
-        } else return false
-    }
-
+    // Не знаю как лучше
     override fun toString(): String {
-        var s = ""
-        for (i in 0 until table.size)  {
-            if (!table[i].isNullOrEmpty())
-            s += "[$i -> " + table[i].toString().replace(Regex("\\D"), "") + "], "
-            s.trim()
+        var str = ""
+        for (i in 0 until this.size) {
+            if (!table[i].isNullOrEmpty()) {
+                str += "[$i -> " + table[i]!!.joinToString(separator = ",") + "] "
+            }
         }
-        return s.trim()
+        return str.trim()
     }
+        /*
+        val sb = StringBuilder()
+        for (i in 0 until this.size) {
+            if (!table[i].isNullOrEmpty()) {
+                sb.append("[").append(i).append(" -> ")
+                sb.append(table[i]!!.joinToString(separator = ","))
+                sb.append("] ")
+
+            }
+        }
+        return sb.toString().trim()
+    }
+*/
 
     override fun hashCode(): Int {
         var result = 0
