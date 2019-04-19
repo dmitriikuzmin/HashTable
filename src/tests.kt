@@ -24,7 +24,6 @@ class HashTableTest {
         assertTrue (table.contains(40))
         assertTrue (80 in table)
         assertTrue(90 in HashTable(90,290,2938))
-        // при использовании infix и выражения table contains 80 на что-то ругается
     }
 
     @Test
@@ -42,17 +41,5 @@ class HashTableTest {
         table.add(20,24)
         assertTrue(table == HashTable(20,4,12,6,16,24))
     }
-
-
-    // ничего не работает ;_;
-    /*
-    @Test
-    fun loadfactor() {
-        val table = HashTable(23,32,43,65,6567,7655,7876754,6565,5367,2456,6773,667,43652,5636,36635,5356)
-        assertEquals(0.64, table.loadFactor())
-        table.add(1,2,3,4,5,6,7,8,9,10,11)
-        assertEquals(0.5, table.loadFactor())
-    }
-    */
 
 }

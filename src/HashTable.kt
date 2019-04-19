@@ -2,15 +2,14 @@ class HashTable(vararg numbers: Int) {
 
     private var size = 32
 
-    private val table = arrayOfNulls<MutableList<Int>>(size)
+    private var table = arrayOfNulls<MutableList<Int>>(size)
 
     private fun hash(value: Int): Int = value % size
 
-    //Тоже самое в виде свойства почему то не работает
-    fun loadFactor(): Double = this.values().size.toDouble() / (size * 5.0)
+    fun loadFactor(): Double = this.values().size.toDouble() / (size * 3.0)
 
     init {
-        while (numbers.size / (size * 5) >= 0.7) {
+        while (numbers.size / (size * 2) >= 0.7) {
             size *= 2
         }
         val values = numbers.toSet().toIntArray()
@@ -31,24 +30,28 @@ class HashTable(vararg numbers: Int) {
                 }
             }
         }
-        return values.sorted()
+        return values
     }
 
-    operator fun contains(value: Int): Boolean = this.values().contains(value)
+    operator fun contains(value: Int): Boolean {
+        val hash = hash(value)
+        return if (!table[hash].isNullOrEmpty()) {
+            table[hash]!!.contains(value)
+        } else false
+    }
 
     fun add(vararg numbers: Int) {
-        // не знаю как это нормально сделать
-        /*
-        while (this.loadFactor() + (numbers.size.toDouble() / (size * 5)) >= 0.7) {
+        while (this.loadFactor() + (numbers.size.toDouble() / (size * 2)) >= 0.7) {
             size *= 2
         }
-        */
-        for (i in 0 until numbers.size) {
-            if (!this.contains(numbers[i])) {
-                val index = hash(numbers[i])
+        val allValues = this.values().toIntArray() + numbers.toSet().toIntArray()
+        //HashTable(*smth)
+        for (i in 0 until allValues.size) {
+            if (!this.contains(allValues[i])) {
+                val index = hash(allValues[i])
                 if (table[index].isNullOrEmpty()) {
-                    table[index] = mutableListOf(numbers[i])
-                } else table[index]!!.add(numbers[i])
+                    table[index] = mutableListOf(allValues[i])
+                } else table[index]!!.add(allValues[i])
             }
         }
     }
@@ -61,31 +64,29 @@ class HashTable(vararg numbers: Int) {
         }
     }
 
-    override fun equals(other: Any?): Boolean = other is HashTable && this.size == other.size && this.values() == other.values()
-
-    // Не знаю как лучше
-    override fun toString(): String {
-        var str = ""
-        for (i in 0 until this.size) {
-            if (!table[i].isNullOrEmpty()) {
-                str += "[$i -> " + table[i]!!.joinToString(separator = ",") + "] "
+    override fun equals(other: Any?): Boolean {
+        if (other is HashTable && this.size == other.size) {
+            for ( i in 0 until this.size) {
+                if (this.table[i].isNullOrEmpty() != other.table[i].isNullOrEmpty()) return false
+                else {
+                    if (!table[i].isNullOrEmpty()) {
+                        if (this.table[i]!!.sorted() != other.table[i]!!.sorted()) return false
+                    }
+                }
             }
-        }
-        return str.trim()
+            return true
+        } else return false
     }
-        /*
+
+    override fun toString(): String {
         val sb = StringBuilder()
         for (i in 0 until this.size) {
             if (!table[i].isNullOrEmpty()) {
-                sb.append("[").append(i).append(" -> ")
-                sb.append(table[i]!!.joinToString(separator = ","))
-                sb.append("] ")
-
+                sb.append("[").append(i).append(" -> ").append(table[i]!!.joinToString(separator = ",")).append("] ")
             }
         }
         return sb.toString().trim()
     }
-*/
 
     override fun hashCode(): Int {
         var result = 0
